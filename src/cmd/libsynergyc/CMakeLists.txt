@@ -1,4 +1,4 @@
-# libsynergyc -- mouse and keyboard sharing utility
+# synergyclib -- mouse and keyboard sharing utility
 # Copyright (C) 2012 Synergy Si Ltd.
 # Copyright (C) 2009 Nick Bolton
 # 
@@ -41,13 +41,13 @@ if (UNIX)
 	)
 endif()
 
-add_library(synergyc ${sources})
-target_link_libraries(synergyc
+add_library(synergyclib ${sources})
+target_link_libraries(synergyclib
 	arch base client common io mt net ipc platform server synergy ${libs})
 
 if (CONF_CPACK)
 	install(TARGETS
-		synergyc
+		synergyclib
 		COMPONENT core
 		DESTINATION bin)
 endif()
