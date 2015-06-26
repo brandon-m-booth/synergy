@@ -19,6 +19,11 @@
 #pragma once
 
 #include "synergy/App.h"
+#if WINAPI_XWINDOWS
+#if WINAPI_CALLBACK
+#include "platform/XWindowsScreenCallback.h"
+#endif
+#endif
 
 namespace synergy { class Screen; }
 class Event;
@@ -75,6 +80,11 @@ public:
 	static ClientApp& instance() { return (ClientApp&)App::instance(); }
 
 	Client* getClientPtr() { return m_client; }
+#if WINAPI_XWINDOWS
+#if WINAPI_CALLBACK
+   XWindowsScreenCallback* getClientXWindowsScreenPtr();
+#endif
+#endif
 
 private:
 	Client*			m_client;

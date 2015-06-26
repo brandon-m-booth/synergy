@@ -48,7 +48,11 @@
 #if WINAPI_MSWINDOWS
 #include "platform/MSWindowsScreen.h"
 #elif WINAPI_XWINDOWS
+#if WINAPI_CALLBACK
+#include "platform/XWindowsScreenCallback.h"
+#else
 #include "platform/XWindowsScreen.h"
+#endif
 #elif WINAPI_CARBON
 #include "platform/OSXScreen.h"
 #endif
@@ -176,9 +180,15 @@ ClientApp::createScreen()
 	return new synergy::Screen(new MSWindowsScreen(
 		false, args().m_noHooks, args().m_stopOnDeskSwitch, m_events), m_events);
 #elif WINAPI_XWINDOWS
+#if WINAPI_CALLBACK
+	return new synergy::Screen(new XWindowsCallbackScreen(
+		args().m_display, false, args().m_disableXInitThreads,
+		args().m_yscroll, m_events), m_events);
+#else
 	return new synergy::Screen(new XWindowsScreen(
 		args().m_display, false, args().m_disableXInitThreads,
 		args().m_yscroll, m_events), m_events);
+#endif
 #elif WINAPI_CARBON
 	return new synergy::Screen(new OSXScreen(m_events, false), m_events);
 #endif
@@ -577,3 +587,9 @@ ClientApp::startNode()
 		m_bye(kExitFailed);
 	}
 }
+
+#if WINAPI_XWINDOWS
+#if WINAPI_CALLBACK
+XWindowsScreenCallback* ClientApp::getClientXWindowsScreenPtr() { return dynamic_cast<XWindowsScreenCallback*>(m_clientScreen->getPlatformScreen()); }
+#endif
+#endif

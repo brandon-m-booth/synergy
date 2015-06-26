@@ -18,10 +18,8 @@ set(sources
 	libsynergyc.cpp
 )
 
-if (UNIX)
-	file(GLOB arch_headers "XWindows*.h")
-	file(GLOB arch_sources "XWindows*.cpp")
-endif()
+file(GLOB arch_headers "XWindows*.h")
+file(GLOB arch_sources "XWindows*.cpp")
 
 list(APPEND sources ${arch_sources})
 list(APPEND headers ${arch_headers})
@@ -35,11 +33,9 @@ include_directories(
 	../../lib/
 )
 
-if (UNIX)
-	include_directories(
-		../../..
-	)
-endif()
+include_directories(
+   ../../..
+)
 
 add_library(synergyclib ${sources})
 target_link_libraries(synergyclib

@@ -16,44 +16,85 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define WINAPI_CALLBACK (1) // Enables callbacks
+
 #include "synergy/ClientApp.h"
 #include "arch/Arch.h"
 #include "base/Log.h"
 #include "base/EventQueue.h"
 
-#if WINAPI_MSWINDOWS
-#include "synergyc/MSWindowsClientTaskBarReceiver.h"
-#elif WINAPI_XWINDOWS
-#include "synergyc/XWindowsClientTaskBarReceiver.h"
-#elif WINAPI_CARBON
-#include "synergyc/OSXClientTaskBarReceiver.h"
+#if WINAPI_XWINDOWS
+#include "libsynergyc/XWindowsClientTaskBarReceiver.h"
 #else
 #error Platform not supported.
 #endif
 
-#include <stdio.h>
+#include <boost/thread.hpp>
 
-void test(char* printme)
+ClientApp* app;
+std::string targetServer;
+boost::thread* clientThread = NULL;
+
+bool GetHasFakeMouseMoveEvents()
 {
-   std::cout << printme << std::endl;
+   return app->getClientXWindowsScreenPtr()->getHasFakeMouseMoveEvents();
 }
 
-/*
-int
-main(int argc, char** argv) 
+bool GetHasFakeKeyStateEvents()
 {
-#if SYSAPI_WIN32
-	// record window instance for tray icon, etc
-	ArchMiscWindows::setInstanceWin32(GetModuleHandle(NULL));
-#endif
-	
+   return app->getClientXWindowsScreenPtr()->getHasFakeKeyStateEvents();
+}
+
+bool GetNextMouseMoveEvent(std::pair<int32_t, int32_t>& mousePos)
+{
+   PlatformScreen::MousePosition mousePosition;
+   if (app->getClientXWindowsScreenPtr()->GetNextMouseMoveEvent(mousePosition))
+   {
+      mousePos.first = mousePosition.x;
+      mousePos.second = mousePosition.y;
+      return true;
+   }
+   return false;
+}
+
+bool GetNextKeyStateEvent(std::pair<unsigned int, bool>& keyState)
+{
+   PlatformScreen::KeyState ks;
+   if (app->getClientXWindowsScreenPtr()->GetNextKeyStateEvent(ks))
+   {
+      keyState.first = ks.keyCode;
+      keyState.second = ks.isDown;
+      return true;
+   }
+   return false;
+}
+
+static void Run()
+{
+   int argc = 2;
+   char foregroundOption[] = "-f";
+   char* argv[argc];
+   argv[0] = foregroundOption;
+   argv[1] = const_cast<char*>(targetServer.c_str());
+	app->run(argc, argv);
+}
+
+void Initialize(std::string serverName)
+{
 	Arch arch;
 	arch.init();
 
 	Log log;
 	EventQueue events;
 
-	ClientApp app(&events, createTaskBarReceiver);
-	return app.run(argc, argv);
+	app = new ClientApp(&events, createTaskBarReceiver);
+
+   targetServer = serverName;
+   clientThread = new boost::thread(&Run);
 }
-*/
+
+void Shutdown()
+{
+   clientThread->join();
+   delete app;
+}

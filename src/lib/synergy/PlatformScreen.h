@@ -22,6 +22,10 @@
 #include "synergy/DragInformation.h"
 #include "common/stdexcept.h"
 
+#include <boost/lockfree/spsc_queue.hpp>
+
+#define FakeEventQueueSize (1024)
+
 //! Base screen implementation
 /*!
 This screen implementation is the superclass of all other screen
@@ -124,4 +128,24 @@ protected:
 	String				m_draggingFilename;
 	bool				m_draggingStarted;
 	bool				m_fakeDraggingStarted;
+
+public:
+   struct MousePosition
+   {
+      int32_t x;
+      int32_t y;
+   };
+   struct KeyState
+   {
+      unsigned int keyCode; // Xlib keycode
+      bool isDown; // true if down, false if up
+   };
+
+   boost::lockfree::spsc_queue<MousePosition, boost::lockfree::capacity<FakeEventQueueSize> > fakeMouseMoveQueue;
+   boost::lockfree::spsc_queue<KeyState, boost::lockfree::capacity<FakeEventQueueSize> > fakeKeyStateQueue;
+
+   bool getHasFakeMouseMoveEvents() { return !fakeMouseMoveQueue.empty(); }
+   bool getHasFakeKeyStateEvents() { return !fakeKeyStateQueue.empty(); }
+   bool GetNextMouseMoveEvent(MousePosition& mp) { return fakeMouseMoveQueue.pop(mp); }
+   bool GetNextKeyStateEvent(KeyState& ks) { return fakeKeyStateQueue.pop(ks); }
 };
